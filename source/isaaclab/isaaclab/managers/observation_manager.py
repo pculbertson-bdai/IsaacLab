@@ -520,18 +520,20 @@ class ObservationManager(ManagerBase):
 
         For flattened terms (tuples of length 1), it simply sums the single value.
 
+        If concatenation is disabled for the group, returns the original list of dimensions.
+
         Raises a RuntimeError if mixed formats are encountered or if dimensions are incompatible.
         """
+        # If concatenation is disabled, return the original dimensions
+        if not self._group_obs_concatenate[group_name]:
+            return group_term_dims
+
         # Separate flattened and unflattened dimensions.
         flattened = [dims for dims in group_term_dims if len(dims) == 1]
         unflattened = [dims for dims in group_term_dims if len(dims) > 1]
 
         if flattened and unflattened:
-            if self._group_obs_concatenate[group_name]:
-                # Observation shapes should not be mixed if concatenating - raise error.
-                raise RuntimeError(f"In group '{group_name}', mixed dimension formats encountered: {group_term_dims}")
-            else:
-                return group_term_dims
+            raise RuntimeError(f"In group '{group_name}', mixed dimension formats encountered: {group_term_dims}")
 
         if unflattened:
             # Unflattened: dims = (H, d1, d2, ..., d_n)
