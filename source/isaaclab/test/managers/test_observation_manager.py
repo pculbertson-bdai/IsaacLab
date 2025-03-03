@@ -755,17 +755,14 @@ class TestObservationManager(unittest.TestCase):
             @configclass
             class PolicyCfg(ObservationGroupCfg):
                 """Test config class for policy observation group with non-concatenated terms."""
+
                 concatenate_terms = False
 
                 term_1 = ObservationTermCfg(
-                    func=grilled_chicken_freerange,
-                    history_length=HISTORY_LENGTH,
-                    flatten_history_dim=False
+                    func=grilled_chicken_freerange, history_length=HISTORY_LENGTH, flatten_history_dim=False
                 )
                 term_2 = ObservationTermCfg(
-                    func=lin_vel_w_data,
-                    history_length=HISTORY_LENGTH,
-                    flatten_history_dim=False
+                    func=lin_vel_w_data, history_length=HISTORY_LENGTH, flatten_history_dim=False
                 )
 
             policy: ObservationGroupCfg = PolicyCfg()
@@ -773,13 +770,13 @@ class TestObservationManager(unittest.TestCase):
         # create observation manager
         cfg = MyObservationManagerCfg()
         self.obs_man = ObservationManager(cfg, self.env)
-        
+
         # compute observation using manager
         observations = self.obs_man.compute()
-        
+
         # obtain the group observations
         obs_policy: dict[str, torch.Tensor] = observations["policy"]
-        
+
         # check the observation shapes
         self.assertEqual((self.env.num_envs, HISTORY_LENGTH, 4), obs_policy["term_1"].shape)
         self.assertEqual((self.env.num_envs, HISTORY_LENGTH, 3), obs_policy["term_2"].shape)
@@ -801,7 +798,7 @@ class TestObservationManager(unittest.TestCase):
         increments = torch.arange(HISTORY_LENGTH, device=self.env.device).reshape(1, -1, 1)
         expected_term_1_data = expected_term_1_data + increments
         self.assertTrue(torch.equal(expected_term_1_data, obs_policy["term_1"]))
-        
+
         # term_2 should remain constant
         self.assertTrue(torch.equal(expected_term_2_data, obs_policy["term_2"]))
 
@@ -809,7 +806,7 @@ class TestObservationManager(unittest.TestCase):
         self.obs_man.reset()
         observations = self.obs_man.compute()
         obs_policy = observations["policy"]
-        
+
         # After reset, should be back to initial values
         expected_term_1_data = torch.arange(4, device=self.env.device).reshape(1, 1, 4).expand(self.env.num_envs, 1, 4)
         expected_term_1_data = expected_term_1_data.expand(-1, HISTORY_LENGTH, -1)
@@ -821,7 +818,7 @@ class TestObservationManager(unittest.TestCase):
         self.obs_man.reset(reset_env_ids)
         observations = self.obs_man.compute()
         obs_policy = observations["policy"]
-        
+
         # Only reset envs should be back to initial values
         for env_id in reset_env_ids:
             self.assertTrue(torch.equal(expected_term_1_data[env_id], obs_policy["term_1"][env_id]))
